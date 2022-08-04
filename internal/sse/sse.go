@@ -1,7 +1,7 @@
 package sse
 
 import (
-	"fmt"
+	"bytes"
 	"io"
 	"net/http"
 )
@@ -24,18 +24,21 @@ func WriteHeader(rw http.ResponseWriter) {
 // If w is http.Flusher, it will flush the writer, ensure the client
 // receive event immediately.
 func (ev *Event) Send(w io.Writer) error {
-	eventLine := fmt.Sprintf("event:%s\n", ev.Event)
-	_, err := w.Write([]byte(eventLine))
-	if err != nil {
-		return err
-	}
+	var b bytes.Buffer
+
+	b.WriteString("event:")
+	b.WriteString(ev.Event)
+	b.WriteString("\n")
 
 	if len(ev.Data) > 0 {
-		dataLine := fmt.Sprintf("data:%s\n\n", string(ev.Data))
-		_, err = w.Write([]byte(dataLine))
-		if err != nil {
-			return err
-		}
+		b.WriteString("data:")
+		b.Write(ev.Data)
+		b.WriteString("\n\n")
+	}
+
+	_, err := w.Write(b.Bytes())
+	if err != nil {
+		return err
 	}
 
 	if f, ok := w.(http.Flusher); ok {
