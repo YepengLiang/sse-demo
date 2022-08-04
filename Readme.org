@@ -2,34 +2,63 @@
 
 Simple and works.
 
-** In Action
+* In Action
 
-*** Run the server:
+** Run the server:
 
 #+begin_src shell
 go run cmd/sse/main.go
 #+end_src
 
+** Curl
 
-*** Curl
-
-A current time stream, updated every second:
+A current time stream, updates every second:
 
 #+begin_src shell
 # a time stream
 curl -vN 127.0.0.1:3000/api/time
+
+#+begin_src text
+> GET /api/time HTTP/1.1
+> Host: 127.0.0.1:3000
+> User-Agent: curl/7.79.1
+> Accept: */*
+>
+
+< HTTP/1.1 200 OK
+< Cache-Control: no-store
+< Content-Type: text/event-stream
+< X-Accel-Buffering: no
+< Date: Thu, 04 Aug 2022 07:05:32 GMT
+< Transfer-Encoding: chunked
+<
+event:time
+data:"2022-08-04T15:05:32.539158+08:00"
+
+event:time
+data:"2022-08-04T15:05:33.53951+08:00"
 #+end_src
 
-
-A counter stream showing how many client is connected:
+A counter stream showing how many clients are connected:
 
 #+begin_src shell
-curl 127.0.0.1:3000/api/client-count
+curl -N 127.0.0.1:3000/api/client-count
+#+end_src
+
+#+begin_src text
+event:client-count
+data:{"Count":1}
+
+event:client-count
+data:{"Count":2}
+
+event:client-count
+data:{"Count":1}
 #+end_src
 
 *** Browser
 
-open http://127.0.0.1:300 in Browser, then enter code in console:
+Open http://127.0.0.1:3000, then enter follwing code in JS console.
 
 #+begin_src javascript
 const timeEvtSource = new EventSource("http://127.0.0.1:3000/api/time");
@@ -39,8 +68,9 @@ const clientEvtSource = new EventSource("http://127.0.0.1:3000/api/client-count"
 clientEvtSource.addEventListener("client-count", t => console.log(t))
 #+end_src
 
+For Chrome, you can simply open http://127.0.0.1:3000/api/client-count and http://127.0.0.1:3000/api/time.
 
-** Navigation Navigating Code
+* Navigating the Code
 
 Not much abstraction, just learn the basic of SSE.
 
@@ -55,8 +85,7 @@ Not much abstraction, just learn the basic of SSE.
   - timeStream: really basic demo of SSE
   - counterStream & ClientCounter: shared state and boardcast example
 
-
-** Considerations
+* Considerations
 
 - Infra
   - Kong / Nginx configuration
@@ -71,7 +100,7 @@ Not much abstraction, just learn the basic of SSE.
     #+end_src
   - Need Cloudflare config changes?
 
-- Message design
+- Event design
   - Keep alive
 
     Do we need to send a ~ping~ event periodically to detech closed client connection?

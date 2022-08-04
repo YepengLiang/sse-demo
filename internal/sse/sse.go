@@ -11,7 +11,8 @@ type Event struct {
 	Data  []byte
 }
 
-// writeHeader write Server-Send Event related headers to the rw.
+// writeHeader writes Server-Send Event related headers to the rw.
+// After calling this, you can not write other headers.
 func WriteHeader(rw http.ResponseWriter) {
 	rw.Header().Add("Content-Type", "text/event-stream")
 	rw.Header().Add("Cache-Control", "no-store")
@@ -19,9 +20,9 @@ func WriteHeader(rw http.ResponseWriter) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-// Send write a Server-Send Event with event and data field to w.
-// If w is http.Flusher, writeEvent will flush the writer, ensure the client
-// receive immediately.
+// Send writes a Server-Send Event with event and data field to w.
+// If w is http.Flusher, it will flush the writer, ensure the client
+// receive event immediately.
 func (ev *Event) Send(w io.Writer) error {
 	eventLine := fmt.Sprintf("event:%s\n", ev.Event)
 	_, err := w.Write([]byte(eventLine))
