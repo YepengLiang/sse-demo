@@ -1,0 +1,87 @@
+#+title: Server-Send Event Demo
+
+Simple and works.
+
+** In Action
+
+*** Run the server:
+
+#+begin_src shell
+go run cmd/sse/main.go
+#+end_src
+
+
+*** Curl
+
+A current time stream, updated every second:
+
+#+begin_src shell
+# a time stream
+curl -vN 127.0.0.1:3000/api/time
+#+end_src
+
+
+A counter stream showing how many client is connected:
+
+#+begin_src shell
+curl 127.0.0.1:3000/api/client-count
+#+end_src
+
+*** Browser
+
+open http://127.0.0.1:300 in Browser, then enter code in console:
+
+#+begin_src javascript
+const timeEvtSource = new EventSource("http://127.0.0.1:3000/api/time");
+timeEvtSource.addEventListener("time", t => console.log(t))
+
+const clientEvtSource = new EventSource("http://127.0.0.1:3000/api/client-count");
+clientEvtSource.addEventListener("client-count", t => console.log(t))
+#+end_src
+
+
+** Navigation Navigating Code
+
+Not much abstraction, just learn the basic of SSE.
+
+- [[./internal/sse/sse.go][internal/sse/sse.go]]
+
+  utils functions to setup headers and send events.
+
+- [[./cmd/sse/main.go][cmd/sse/main.go]]
+
+  two example:
+
+  - timeStream: really basic demo of SSE
+  - counterStream & ClientCounter: shared state and boardcast example
+
+
+** Considerations
+
+- Infra
+  - Kong / Nginx configuration
+
+    keep connection open, avoid buffering.
+
+    https://serverfault.com/questions/801628/for-server-sent-events-sse-what-nginx-proxy-configuration-is-appropriate
+
+    #+begin_src nginx
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    #+end_src
+  - Need Cloudflare config changes?
+
+- Message design
+  - Keep alive
+
+    Do we need to send a ~ping~ event periodically to detech closed client connection?
+
+  - Event ID
+
+    A event may also include a event id, maybe useful for resend.
+
+    #+begin_src text
+    event: ...
+    data: ....
+    id: 1
+    #+end_src
